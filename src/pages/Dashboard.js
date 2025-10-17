@@ -64,7 +64,14 @@ const Dashboard = ({ onNavigate }) => {
   };
 
   const handleViewAnalytics = (attempt) => {
-    onNavigate('analytics', { sessionId: attempt.sessionId, quizTitle: attempt.quizTitle, score: attempt.score, totalQuestions: attempt.totalQuestions });
+    const isHost = attempt.hostUsername === user.username; // Compare with current user
+    onNavigate('analytics', {
+      sessionId: attempt.sessionId,
+      quizTitle: attempt.quizTitle,
+      score: attempt.score,
+      totalQuestions: attempt.totalQuestions,
+      isHost // Pass isHost flag
+    });
   };
 
   const AttemptedQuizCard = ({ attempt }) => (
