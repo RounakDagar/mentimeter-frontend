@@ -49,16 +49,6 @@ const Dashboard = ({ onNavigate }) => {
     </div>
   );
 
-  const AttemptedQuizCard = ({ attempt }) => (
-    <div className="bg-white rounded-xl shadow-md p-6 border-2 border-transparent mb-4">
-      <h3 className="text-xl font-semibold text-gray-900 mb-2">{attempt.quizTitle}</h3>
-      <p className="text-gray-600 mb-1">Score: {attempt.score} / {attempt.totalQuestions}</p>
-      <p className="text-gray-600 mb-1">Attempted At: {new Date(attempt.attemptedAt).toLocaleString()}</p>
-      <p className="text-gray-600 mb-1">Session ID: {attempt.sessionId}</p>
-      {/* You can add more details if needed */}
-    </div>
-  );
-
   const handleCreateQuiz = () => setShowCreateModal(true);
 
   const handleStartSession = async (quizId) => {
@@ -72,6 +62,22 @@ const Dashboard = ({ onNavigate }) => {
       alert('Failed to create session');
     }
   };
+
+  const handleViewAnalytics = (attempt) => {
+    onNavigate('analytics', { sessionId: attempt.sessionId, quizTitle: attempt.quizTitle, score: attempt.score, totalQuestions: attempt.totalQuestions });
+  };
+
+  const AttemptedQuizCard = ({ attempt }) => (
+    <div
+      className="bg-white rounded-xl shadow-md p-6 border-2 border-transparent mb-4 cursor-pointer hover:border-indigo-500"
+      onClick={() => handleViewAnalytics(attempt)}
+    >
+      <h3 className="text-xl font-semibold text-gray-900 mb-2">{attempt.quizTitle}</h3>
+      <p className="text-gray-600 mb-1">Score: {attempt.score} / {attempt.totalQuestions}</p>
+      <p className="text-gray-600 mb-1">Attempted At: {new Date(attempt.attemptedAt).toLocaleString()}</p>
+      <p className="text-gray-600 mb-1">Session ID: {attempt.sessionId}</p>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">

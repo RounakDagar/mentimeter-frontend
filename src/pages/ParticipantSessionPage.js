@@ -22,8 +22,14 @@ const ParticipantSessionPage = ({ joinCode, name, onNavigate }) => {
         setHasAnswered(false);
       });
   
+      // Subscribe to session end
+      const unsubEnd = subscribe(`/topic/session/${joinCode}/ended`, (data) => {
+        handleSessionEnd(data.score, data.totalQuestions, data.quizTitle);
+      });
+  
       return () => {
         if (unsubQuestion) unsubQuestion();
+        if (unsubEnd) unsubEnd();
       };
     }, [connected, joinCode, name]);
   
@@ -36,6 +42,15 @@ const ParticipantSessionPage = ({ joinCode, name, onNavigate }) => {
         optionIndex
       });
       setHasAnswered(true);
+    };
+  
+    const handleSessionEnd = (finalScore, totalQuestions, quizTitle) => {
+      onNavigate('analytics', {
+        sessionId: joinCode,
+        quizTitle,
+        score: finalScore,
+        totalQuestions
+      });
     };
   
     return (

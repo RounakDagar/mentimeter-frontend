@@ -79,7 +79,12 @@ const HostSessionPage = ({ joinCode, quizId, onNavigate }) => {
     const handleEnd = async () => {
       try {
         await apiCall(`/sessions/${joinCode}/end`, { method: 'PUT' });
-        onNavigate('analytics', { joinCode });
+        onNavigate('analytics', {
+          sessionId: joinCode,           // Pass joinCode as sessionId
+          quizTitle: quiz?.title || '',  // Pass quiz title
+          totalQuestions: quiz?.questionList?.length || 0 // Pass total questions
+          // Do NOT pass score
+        });
       } catch (err) {
         console.error('Failed to end session:', err);
       }
