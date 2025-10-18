@@ -3,6 +3,7 @@ import { Users, Plus, ChevronRight, LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useAPI } from '../hooks/useAPI';
 import CreateQuizModal from './CreateQuizModal';
+import HostedQuizzesPage from './HostedQuizzesPage';
 
 const Dashboard = ({ onNavigate }) => {
   const [tab, setTab] = useState('hosted'); // 'hosted' or 'attempted'
@@ -16,8 +17,7 @@ const Dashboard = ({ onNavigate }) => {
   // Fetch hosted quizzes (existing logic)
   useEffect(() => {
     if (tab === 'hosted') {
-      // ...fetch hosted quizzes logic here if you have it...
-      // setQuizzes(...)
+      <HostedQuizzesPage user={user} onNavigate={onNavigate} />
     }
   }, [tab]);
 
@@ -134,8 +134,31 @@ const Dashboard = ({ onNavigate }) => {
         </div>
       )}
 
-      {/* Tabs */}
+      {/* Header & Actions */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900">My Quizzes</h2>
+            <p className="text-gray-600 mt-1">Create and manage your interactive quizzes</p>
+          </div>
+          <div className="flex gap-3 w-full sm:w-auto">
+            <button
+              onClick={handleCreateQuiz}
+              className="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition"
+            >
+              <Plus className="w-5 h-5" />
+              <span>Create Quiz</span>
+            </button>
+            <button
+              onClick={() => onNavigate('join')}
+              className="flex-1 sm:flex-none px-6 py-3 bg-white border-2 border-indigo-600 text-indigo-600 rounded-lg font-semibold hover:bg-indigo-50 transition"
+            >
+              Join Quiz
+            </button>
+          </div>
+        </div>
+
+        {/* Tabs */}
         <div className="flex space-x-4 border-b mb-8">
           <button
             className={`px-4 py-2 font-semibold ${tab === 'hosted' ? 'border-b-4 border-indigo-600 text-indigo-700' : 'text-gray-600'}`}
@@ -155,55 +178,7 @@ const Dashboard = ({ onNavigate }) => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {tab === 'hosted' ? (
-          <>
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-900">My Quizzes</h2>
-                <p className="text-gray-600 mt-1">Create and manage your interactive quizzes</p>
-              </div>
-              <div className="flex gap-3 w-full sm:w-auto">
-                <button
-                  onClick={handleCreateQuiz}
-                  className="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition"
-                >
-                  <Plus className="w-5 h-5" />
-                  <span>Create Quiz</span>
-                </button>
-                <button
-                  onClick={() => onNavigate('join')}
-                  className="flex-1 sm:flex-none px-6 py-3 bg-white border-2 border-indigo-600 text-indigo-600 rounded-lg font-semibold hover:bg-indigo-50 transition"
-                >
-                  Join Quiz
-                </button>
-              </div>
-            </div>
-            {/* Quiz Grid */}
-            {quizzes.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-xl shadow-sm">
-                <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">No quizzes yet</h3>
-                <p className="text-gray-600 mb-6">Create your first quiz to get started</p>
-                <button
-                  onClick={handleCreateQuiz}
-                  className="inline-flex items-center space-x-2 px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700"
-                >
-                  <Plus className="w-5 h-5" />
-                  <span>Create Your First Quiz</span>
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {quizzes.map(quiz => (
-                  <QuizCard
-                    key={quiz.id}
-                    quiz={quiz}
-                    onClick={() => handleStartSession(quiz.id)}
-                  />
-                ))}
-              </div>
-            )}
-          </>
+          <HostedQuizzesPage user={user} onNavigate={onNavigate} />
         ) : (
           <>
             {attemptedQuizzes.length === 0 ? (

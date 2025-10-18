@@ -8,6 +8,7 @@ import HostSessionPage from './pages/HostSessionPage';
 import ParticipantSessionPage from './pages/ParticipantSessionPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import { Users } from 'lucide-react';
+import HostedQuizzesPage from './pages/HostedQuizzesPage';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('login');
@@ -59,6 +60,8 @@ const AuthRouter = ({ currentPage, pageProps, onNavigate }) => {
       return <ParticipantSessionPage {...pageProps} onNavigate={onNavigate} />;
     case 'analytics':
       return <AnalyticsPage {...pageProps} onNavigate={onNavigate} />;
+    case 'hostedQuizzes':
+      return <HostedQuizzesPage user={user} onNavigate={onNavigate} />;
     default:
       return <Dashboard onNavigate={onNavigate} />;
   }
