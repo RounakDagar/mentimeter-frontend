@@ -9,6 +9,8 @@ import ParticipantSessionPage from './pages/ParticipantSessionPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import { Users } from 'lucide-react';
 import HostedQuizzesPage from './pages/HostedQuizzesPage';
+import HostedQuizAnalyticsPage from './pages/HostedQuizAnalyticsPage';
+import { ThemeProvider } from './context/ThemeContext';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('login');
@@ -20,9 +22,11 @@ export default function App() {
   };
 
   return (
+    <ThemeProvider>
     <AuthProvider>
       <AuthRouter currentPage={currentPage} pageProps={pageProps} onNavigate={navigate} />
     </AuthProvider>
+    </ThemeProvider>
   );
 }
 
@@ -62,6 +66,15 @@ const AuthRouter = ({ currentPage, pageProps, onNavigate }) => {
       return <AnalyticsPage {...pageProps} onNavigate={onNavigate} />;
     case 'hostedQuizzes':
       return <HostedQuizzesPage user={user} onNavigate={onNavigate} />;
+    case 'hostedQuizAnalytics':
+      return (
+        <HostedQuizAnalyticsPage
+          quizTitle={pageProps.quizTitle}
+          joinCode={pageProps.joinCode}
+          username={pageProps.username}
+          onNavigate={onNavigate}
+        />
+      );
     default:
       return <Dashboard onNavigate={onNavigate} />;
   }
