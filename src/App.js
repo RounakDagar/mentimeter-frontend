@@ -17,6 +17,7 @@ export default function App() {
   const [pageProps, setPageProps] = useState({});
 
   const navigate = (page, props = {}) => {
+    console.log("Navigating to:", page, "with props:", props); // Good for debugging
     setCurrentPage(page);
     setPageProps(props);
   };
@@ -69,9 +70,7 @@ const AuthRouter = ({ currentPage, pageProps, onNavigate }) => {
     case 'hostedQuizAnalytics':
       return (
         <HostedQuizAnalyticsPage
-          quizTitle={pageProps.quizTitle}
-          joinCode={pageProps.joinCode}
-          username={pageProps.username}
+          {...pageProps} // <-- FIX: Use spread operator to pass all props
           onNavigate={onNavigate}
         />
       );

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { ChevronLeft, Check, BarChart3, Users, ListChecks } from "lucide-react"; // Added icons
+import { ChevronLeft, Check, BarChart3, Users, ListChecks, RefreshCw, Loader2 } from "lucide-react"; // Added RefreshCw, Loader2
 import { useAPI } from "../hooks/useAPI";
 
-// ## Component: SkeletonQuestionCard ##
+// ## Component: SkeletonQuestionCard ## (No changes)
 const SkeletonQuestionCard = () => (
   <div className="bg-white rounded-xl shadow-md p-6 mb-8 border border-slate-200 dark:bg-slate-800 dark:border-slate-700">
     <div className="animate-pulse">
@@ -16,7 +16,7 @@ const SkeletonQuestionCard = () => (
   </div>
 );
 
-// ## Component: EmptyState ##
+// ## Component: EmptyState ## (No changes)
 const EmptyState = () => (
   <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-slate-200 dark:bg-slate-800 dark:border-slate-700">
     <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4 dark:text-slate-600" />
@@ -29,8 +29,7 @@ const EmptyState = () => (
   </div>
 );
 
-// ## ENHANCED Component: OptionBar ##
-// This now renders usernames as pills for a much cleaner UI.
+// ## ENHANCED Component: OptionBar ## (No changes from previous)
 const OptionBar = ({ text, percent, count, usernames, isCorrect }) => {
   let ringColor = 'ring-slate-200 dark:ring-slate-700';
   let bgBarColor = 'bg-slate-100 dark:bg-slate-700/50';
@@ -87,8 +86,7 @@ const OptionBar = ({ text, percent, count, usernames, isCorrect }) => {
 };
 
 
-// ## ENHANCED Component: QuestionCard ##
-// Now calculates difficulty on the frontend.
+// ## ENHANCED Component: QuestionCard ## (No changes from previous)
 const QuestionCard = ({ q, idx }) => {
   const totalVotes = Object.values(q.optionCounts || {}).reduce((a, b) => a + b, 0);
   
@@ -150,11 +148,13 @@ const QuestionCard = ({ q, idx }) => {
   );
 };
 
-// ## Improved Page: HostedQuizAnalyticsPage ##
-const HostedQuizAnalyticsPage = ({ quizTitle, joinCode, username, onNavigate }) => {
+
+// ## Main Page: HostedQuizAnalyticsPage ##
+const HostedQuizAnalyticsPage = ({ quizId, quizTitle, joinCode, username, onNavigate }) => { // 1. Added quizId prop
   const { apiCall } = useAPI();
   const [analytics, setAnalytics] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [hostingAgain, setHostingAgain] = useState(false); // 2. State for host again button loading
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -170,6 +170,28 @@ const HostedQuizAnalyticsPage = ({ quizTitle, joinCode, username, onNavigate }) 
     };
     fetchAnalytics();
   }, [joinCode, username, apiCall]);
+
+  
+  const handleHostAgain = async () => {
+  
+    if (!quizId) {
+      alert('Error: Quiz ID is missing.');
+      return;
+    }
+    setHostingAgain(true);
+    try {
+      const response = await apiCall('/sessions', {
+        method: 'POST',
+        body: JSON.stringify({ quizId })
+      });
+      onNavigate('host', { joinCode: response.joinCode, quizId });
+    } catch (err) {
+      alert('Failed to create a new session for this quiz.');
+      console.error("Failed to host again:", err);
+    } finally {
+      setHostingAgain(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 py-8">
@@ -203,9 +225,23 @@ const HostedQuizAnalyticsPage = ({ quizTitle, joinCode, username, onNavigate }) 
             <p className="mt-1 text-slate-500 dark:text-slate-400">
               You are viewing this report as the <span className="font-semibold text-slate-700 dark:text-slate-300">Host</span>.
             </p>
+             {/* 4. "Host Again" Button */}
+             <button
+              onClick={handleHostAgain}
+              disabled={hostingAgain || loading} // Disable if page is still loading analytics too
+              className="mt-4 inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition disabled:opacity-50"
+            >
+              {hostingAgain ? (
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="w-5 h-5 mr-2" />
+              )}
+              {hostingAgain ? 'Starting...' : 'Host Again'}
+            </button>
           </div>
           <div className="flex gap-4">
-            <div className="text-left bg-indigo-50 text-indigo-700 p-4 rounded-lg dark:bg-indigo-900/50 dark:text-indigo-400 flex items-center gap-3">
+             {/* Stat boxes */}
+             <div className="text-left bg-indigo-50 text-indigo-700 p-4 rounded-lg dark:bg-indigo-900/50 dark:text-indigo-400 flex items-center gap-3">
               <Users className="w-6 h-6" />
               <div>
                 <span className="text-xs uppercase font-semibold">Role</span>
