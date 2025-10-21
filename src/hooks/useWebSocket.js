@@ -87,7 +87,7 @@ export const useWebSocket = (joinCode) => {
       subscriptions.current[destination] = [];
       
       if (ws && connected) {
-        const subscribeFrame = `SUBSCRIBE\nid:sub-${Date.now()}\ndestination:${destination}\n\n\0`;
+        const subscribeFrame = `SUBSCRIBE\nid:sub-${crypto.randomUUID()}\ndestination:${destination}\n\n\0`;
         ws.send(subscribeFrame);
       }
     }
