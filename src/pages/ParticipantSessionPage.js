@@ -1,24 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Clock, CheckCircle } from 'lucide-react';
+// 1. Removed 'Undo2' icon
+import { Clock, CheckCircle, Send } from 'lucide-react'; 
 import { useWebSocket } from '../hooks/useWebSocket';
 
 const ParticipantSessionPage = ({ joinCode, name, onNavigate }) => {
     const [currentQuestion, setCurrentQuestion] = useState(null);
     const [selectedAnswer, setSelectedAnswer] = useState(null);
     const [hasAnswered, setHasAnswered] = useState(false);
-    const { connected, subscribe, send } = useWebSocket(joinCode);
-    
-    const hasJoined = useRef(false);
+    const [sessionStatus, setSessionStatus] = useState('WAITING');
 
-    // --- START OF FIX: Stale Closure Fix ---
-    // Create a ref to hold the *latest* version of the onNavigate prop
+    const { connected, subscribe, send } = useWebSocket(joinCode);
+    const hasJoined = useRef(false);
     const onNavigateRef = useRef(onNavigate);
 
-    // Keep the ref updated on every render
     useEffect(() => {
       onNavigateRef.current = onNavigate;
     }, [onNavigate]);
-    // --- END OF FIX ---
 
     // EFFECT 1: Handles Joining the Session (Runs Once)
     useEffect(() => {
@@ -32,56 +29,69 @@ const ParticipantSessionPage = ({ joinCode, name, onNavigate }) => {
     useEffect(() => {
       if (!connected) return;
 
-      
-
-      // This function is defined inside the effect
       const handleSessionEnd = () => {
         console.log('Quiz ended signal received! Navigating to analytics...');
-        // --- FIX: Use the ref's .current value ---
-        // This guarantees we call the LATEST onNavigate function
+        setSessionStatus('ENDED');
         onNavigateRef.current('analytics', {
           sessionId: joinCode,
           isHost: false
         });
       };
 
-      // 1. Subscribe to new question updates
+      // Subscribe to new question updates
       const unsubQuestion = subscribe(`/topic/session/${joinCode}/question`, (data) => {
         setCurrentQuestion(data);
-        setSelectedAnswer(null);
-        setHasAnswered(false);
+        setSelectedAnswer(null); // Reset selection for new question
+        setHasAnswered(false);   // Reset submitted status
+        setSessionStatus('ACTIVE');
       });
   
-      // 2. Subscribe to the session end signal
+      // Subscribe to the session end signal
       const unsubEnd = subscribe(
         `/topic/session/${joinCode}/ended`, 
-        handleSessionEnd // Use the handler defined above
+        handleSessionEnd
       );
+
+      // Subscribe to pause/resume status updates
+      const unsubStatus = subscribe(`/topic/session/${joinCode}`, (data) => {
+          if (data && data.eventType === 'STATUS_UPDATE') {
+              console.log('Session status updated:', data.status);
+              setSessionStatus(data.status);
+          }
+      });
   
-      // 3. Cleanup
+      // Cleanup all subscriptions
       return () => {
         if (unsubQuestion) unsubQuestion();
         if (unsubEnd) unsubEnd();
+        if (unsubStatus) unsubStatus();
       };
       
-    // We remove onNavigate from this array.
-    // The ref handles it, so this effect won't re-run
-    // just because onNavigate changes.
     }, [connected, joinCode, subscribe]); 
   
-    // Handler for when the user clicks an answer
+    // This function now ONLY sets the selected answer.
     const handleAnswer = (optionIndex) => {
-      if (hasAnswered || !currentQuestion) return;
-      
+      if (hasAnswered) return; // Don't allow changing answer after submitting
       setSelectedAnswer(optionIndex);
-      send(`/app/session/${joinCode}/answer`, {
-        questionIndex: currentQuestion.index, 
-        optionIndex
-      });
-      setHasAnswered(true);
     };
 
-    // --- Render JSX (No changes below) ---
+    // This function is called by the "Submit" button.
+    const handleSubmit = () => {
+        // Guard against submitting nothing
+        if (selectedAnswer === null || !currentQuestion) return;
+
+        send(`/app/session/${joinCode}/answer`, {
+            questionIndex: currentQuestion.questionIndex, // Use questionIndex from DTO
+            optionIndex: selectedAnswer
+        });
+        setHasAnswered(true); // Lock the answer
+    };
+
+    // 2. --- REMOVED 'handleWithdraw' FUNCTION ---
+
+    // --- UI Logic ---
+    const isWaiting = !currentQuestion || sessionStatus === 'WAITING';
+    const waitingText = !currentQuestion ? 'Waiting for quiz to start...' : 'Session is paused...';
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 flex items-center justify-center p-4 dark:from-slate-900 dark:via-indigo-950 dark:to-purple-950">
@@ -91,41 +101,63 @@ const ParticipantSessionPage = ({ joinCode, name, onNavigate }) => {
             <p className="text-gray-600 dark:text-slate-400">Welcome, {name}!</p>
           </div>
   
-          {/* Waiting Screen */}
-          {!currentQuestion ? (
+          {isWaiting ? (
             <div className="text-center py-12">
               <Clock className="w-16 h-16 text-indigo-600 mx-auto mb-4 animate-pulse dark:text-indigo-400" />
-              <h2 className="text-xl font-semibold text-gray-900 mb-2 dark:text-slate-100">Waiting for quiz to start...</h2>
-              <p className="text-gray-600 dark:text-slate-400">Get ready!</p>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2 dark:text-slate-100">{waitingText}</h2>
+              <p className="text-gray-600 dark:text-slate-400">Please wait for the host to continue.</p>
             </div>
           ) : (
-            // Question Screen
+            // --- UPDATED QUESTION SCREEN ---
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 dark:text-slate-100">{currentQuestion.text}</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 dark:text-slate-100">
+                {currentQuestion.text}
+              </h2>
+              
+              {/* Option Buttons */}
               <div className="space-y-3">
                 {currentQuestion.options?.map((option, index) => (
                   <button
                     key={index}
                     onClick={() => handleAnswer(index)}
-                    disabled={hasAnswered}
+                    disabled={hasAnswered} // Disable buttons AFTER submitting
                     className={`w-full p-4 text-left rounded-lg font-medium transition ${
                       selectedAnswer === index
-                        ? 'bg-indigo-600 text-white ring-2 ring-indigo-500'
-                        : 'bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600'
-                    } ${hasAnswered ? 'cursor-not-allowed opacity-75' : 'cursor-pointer'}`}
+                        ? 'bg-indigo-600 text-white ring-2 ring-indigo-500' // Selected style
+                        : 'bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600' // Default style
+                    } ${hasAnswered ? 'cursor-not-allowed opacity-75' : 'cursor-pointer'}`} // Disabled style
                   >
                     {option}
                   </button>
                 ))}
               </div>
-              {/* Submitted Screen */}
-              {hasAnswered && (
-                <div className="mt-6 text-center">
-                  <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-2 dark:text-green-500" />
-                  <p className="text-gray-900 font-semibold dark:text-slate-100">Answer submitted!</p>
-                  <p className="text-gray-600 text-sm dark:text-slate-400">Waiting for next question...</p>
-                </div>
-              )}
+              
+              {/* 3. --- UPDATED CONDITIONAL BUTTONS SECTION --- */}
+              <div className="mt-8">
+                {!hasAnswered ? (
+                  // --- SUBMIT BUTTON ---
+                  <button
+                    onClick={handleSubmit}
+                    disabled={selectedAnswer === null} // Disabled if nothing is selected
+                    className="w-full flex items-center justify-center space-x-2 p-4 rounded-lg bg-indigo-600 text-white font-semibold transition hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-indigo-500 dark:hover:bg-indigo-600"
+                  >
+                    <Send className="w-5 h-5" />
+                    <span>Submit Answer</span>
+                  </button>
+                ) : (
+                  // --- "Submitted" Message ---
+                  // The "Withdraw" button has been removed from here
+                  <div className="text-center p-4 bg-green-50 rounded-lg dark:bg-green-900/20">
+                    <div className="flex items-center justify-center text-green-700 dark:text-green-400">
+                      <CheckCircle className="w-6 h-6 mr-2" />
+                      <p className="font-semibold">Answer submitted!</p>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-slate-400 mt-1">
+                      Waiting for the host to continue...
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

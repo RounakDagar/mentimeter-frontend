@@ -3,7 +3,7 @@ import { Check, X, ChevronLeft, UserCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useAPI } from '../hooks/useAPI';
 
-// ## ScoreCircle Component ##
+// ## ScoreCircle Component (No Changes) ##
 const ScoreCircle = ({ score, total }) => {
   const percent = total > 0 ? Math.round((score / total) * 100) : 0;
   const radius = 60;
@@ -44,7 +44,7 @@ const ScoreCircle = ({ score, total }) => {
   );
 };
 
-// ## HostIndicator Component ##
+// ## HostIndicator Component (No Changes) ##
 const HostIndicator = () => {
   return (
     <div className="relative w-40 h-40 flex items-center justify-center">
@@ -59,7 +59,7 @@ const HostIndicator = () => {
 };
 
 
-// ## OptionBar Component ##
+// ## OptionBar Component (No Changes) ##
 const OptionBar = ({ text, percent, count, isCorrect, isUser, isUserIncorrect }) => {
   let ringColor = 'ring-slate-200 dark:ring-slate-700';
   let bgBarColor = 'bg-slate-100 dark:bg-slate-700/50';
@@ -123,7 +123,7 @@ const OptionBar = ({ text, percent, count, isCorrect, isUser, isUserIncorrect })
   );
 };
 
-// ## QuestionCard Component ##
+// ## QuestionCard Component (No Changes) ##
 const QuestionCard = ({ q, idx, totalNumQuestions }) => {
   const totalVotes = Object.values(q.optionCounts).reduce((a, b) => a + b, 0);
   return (
@@ -164,22 +164,52 @@ const AnalyticsPage = ({ sessionId, quizTitle, score, totalQuestions, onNavigate
   const [analytics, setAnalytics] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // --- FIX 1: Create state for data that will be fetched ---
+  // Use the incoming props as the *initial* values.
+  const [displayScore, setDisplayScore] = useState(score);
+  const [displayTotal, setDisplayTotal] = useState(totalQuestions);
+  const [displayTitle, setDisplayTitle] = useState(quizTitle);
+
   useEffect(() => {
-    if (sessionId && user?.username) {
-      (async () => {
-        try {
-          const url = `/sessions/${sessionId}/${user.username}/analytics`;
-          const data = await apiCall(url, { method: 'GET' });
-          setAnalytics(data || []);
-        } catch (err) {
-          console.error("Failed to fetch analytics:", err);
-          setAnalytics([]);
-        } finally {
-          setLoading(false);
-        }
-      })();
+    if (!sessionId || !user?.username) {
+      setLoading(false); // No data to load
+      return;
     }
-  }, [sessionId, user, apiCall]);
+    
+    const fetchAnalyticsData = async () => {
+      setLoading(true);
+      try {
+        // Fetch 1: The overall analytics data
+        const analyticsUrl = `/sessions/${sessionId}/${user.username}/analytics`;
+        const analyticsData = await apiCall(analyticsUrl, { method: 'GET' });
+        setAnalytics(analyticsData || []);
+        
+        // Fetch 2: The participant-specific score/total (if not host)
+        // Your console log suggested this endpoint also returns the title.
+        if (!isHost) {
+          const attemptUrl = `/quiz/${user.username}/AttemptedQuiz/${sessionId}/quizAttempt`;
+          const attemptData = await apiCall(attemptUrl, { method: 'GET' });
+          
+          // --- FIX 2: Use state setters to update the UI ---
+          setDisplayScore(attemptData.score);
+          setDisplayTotal(attemptData.totalQuestions);
+          // Also update the title, as the prop might be stale
+          setDisplayTitle(attemptData.quizTitle); 
+          console.log("Fetched quiz attempt:", attemptData);
+        }
+        
+      } catch (err) {
+        console.error("Failed to fetch analytics data:", err);
+        setAnalytics([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchAnalyticsData();
+
+  }, [sessionId, user, apiCall, isHost]); // Add isHost to dependency array
+  
 
   if (loading) {
     return (
@@ -210,7 +240,8 @@ const AnalyticsPage = ({ sessionId, quizTitle, score, totalQuestions, onNavigate
       <div className="w-full max-w-4xl mx-auto">
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-10 border border-slate-200 flex flex-col md:flex-row items-center justify-between gap-8 dark:bg-slate-800 dark:border-slate-700">
           <div className="text-center md:text-left">
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-slate-100">{quizTitle}</h1>
+            {/* --- FIX 3: Use the state variable for the title --- */}
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-slate-100">{displayTitle}</h1>
             <p className="mt-2 text-slate-500 dark:text-slate-400">
               {isHost ? "Here's the session's overall performance." : "Here's the breakdown of your results."}
             </p>
@@ -222,7 +253,8 @@ const AnalyticsPage = ({ sessionId, quizTitle, score, totalQuestions, onNavigate
             {isHost ? (
               <HostIndicator />
             ) : (
-              <ScoreCircle score={score} total={totalQuestions} />
+              // --- FIX 4: Use the state variables for the score circle ---
+              <ScoreCircle score={displayScore} total={displayTotal} />
             )}
           </div>
         </div>
