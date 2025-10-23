@@ -11,6 +11,7 @@ import { Users } from 'lucide-react';
 import HostedQuizzesPage from './pages/HostedQuizzesPage';
 import HostedQuizAnalyticsPage from './pages/HostedQuizAnalyticsPage';
 import { ThemeProvider } from './context/ThemeContext';
+import EditQuizPage from './pages/EditQuizPage';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('login');
@@ -67,6 +68,14 @@ const AuthRouter = ({ currentPage, pageProps, onNavigate }) => {
       return <AnalyticsPage {...pageProps} onNavigate={onNavigate} />;
     case 'hostedQuizzes':
       return <HostedQuizzesPage user={user} onNavigate={onNavigate} />;
+      // 2. ADD THIS NEW CASE FOR THE EDIT PAGE
+    case 'edit-quiz':
+      return (
+        <EditQuizPage
+          onNavigate={onNavigate}
+          quizId={pageProps.quizId} // Passes the quizId from props
+        />
+      );
     case 'hostedQuizAnalytics':
       return (
         <HostedQuizAnalyticsPage
