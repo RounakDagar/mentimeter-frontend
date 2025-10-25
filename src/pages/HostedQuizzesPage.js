@@ -1,241 +1,338 @@
-import React, { useEffect, useState } from "react";
-import { useAPI } from "../hooks/useAPI";
+// src/pages/HostedQuizzesPage.js
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useAPI } from '../hooks/useAPI';
 import {
-  ChevronRight,
-  ListChecks,
-  Calendar,
-  Hash,
-  Users,
-  Trash2, // Added for delete icon
-  Loader2, // Added for loading spinner
-  AlertTriangle, // Added for modal icon
-} from "lucide-react";
+    Loader2,
+    Trash2,
+    AlertTriangle,
+    Eye,
+    Calendar,
+    Clock,
+    X,
+    CheckCircle,
+    AlertOctagon,
+    History,
+    Search, // Added
+    ChevronDown, // Added
+    FileSearch // Added
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// ## Component: SkeletonCard ## (No changes)
-const SkeletonCard = () => (
-  <div className="bg-white rounded-xl shadow-md p-6 border-2 border-transparent dark:bg-slate-800">
-    <div className="animate-pulse">
-      <div className="h-6 bg-gray-200 rounded w-3/4 mb-4 dark:bg-slate-700"></div>
-      <div className="h-4 bg-gray-200 rounded w-1/2 mb-2 dark:bg-slate-700"></div>
-      <div className="h-4 bg-gray-200 rounded w-1/2 mb-2 dark:bg-slate-700"></div>
-      <div className="h-4 bg-gray-200 rounded w-1/3 mb-6 dark:bg-slate-700"></div>
-      <div className="h-5 bg-gray-200 rounded w-1/4 dark:bg-slate-700"></div>
-    </div>
-  </div>
-);
+// ##################################################################
+// ## REUSABLE COMPONENTS (Consistent with Premium Dashboard) ##
+// ##################################################################
 
-// ## NEW Component: ConfirmationModal ##
-const ConfirmationModal = ({ isOpen, onClose, onConfirm, isDeleting, title, message }) => {
-  if (!isOpen) return null;
-
+// --- Notification Pop-up ---
+const Notification = ({ message, type = 'error', onClose }) => {
+  useEffect(() => { const timer = setTimeout(onClose, 3000); return () => clearTimeout(timer); }, [onClose]);
+  const isError = type === 'error';
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl p-6 w-full max-w-md text-center">
-        <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/50">
-          <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" aria-hidden="true" />
-        </div>
-        <h3 className="text-xl font-semibold text-gray-900 mt-4 dark:text-slate-100">{title}</h3>
-        <p className="text-sm text-gray-500 mt-2 dark:text-slate-400">{message}</p>
-        <div className="mt-6 flex justify-center gap-4">
-          <button
-            type="button"
-            className="px-6 py-2 rounded-lg text-sm font-semibold bg-white dark:bg-slate-700 dark:text-slate-200 border border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-600"
-            onClick={onClose}
-            disabled={isDeleting}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="px-6 py-2 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 flex items-center"
-            onClick={onConfirm}
-            disabled={isDeleting}
-          >
-            {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isDeleting ? 'Deleting...' : 'Confirm Delete'}
-          </button>
-        </div>
-      </div>
+    <div className="fixed top-5 right-5 z-[200] w-full max-w-sm">
+       <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 50 }} className={`flex items-start p-4 rounded-xl shadow-2xl border ${ isError ? 'bg-red-50 dark:bg-gray-900 border-red-200 dark:border-red-700' : 'bg-green-50 dark:bg-gray-900 border-green-200 dark:border-green-700'} backdrop-blur-lg`}>
+         <div className={`flex-shrink-0 p-1.5 rounded-full ${isError ? 'bg-red-100 dark:bg-red-800' : 'bg-green-100 dark:bg-green-800'}`}> {isError ? <AlertOctagon className="w-5 h-5 text-red-600 dark:text-red-300"/> : <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-300"/>} </div>
+         <div className="ml-3 flex-1"> <p className={`text-sm font-semibold ${isError ? 'text-red-900 dark:text-red-200' : 'text-green-900 dark:text-green-200'}`}>{isError ? 'Error' : 'Success'}</p> <p className={`text-sm ${isError ? 'text-red-700 dark:text-red-300' : 'text-green-700 dark:text-green-300'} mt-1`}>{message}</p> </div>
+         <button onClick={onClose} className="ml-auto -mr-1 p-1.5 rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={16} /></button>
+       </motion.div>
     </div>
   );
 };
 
 
-// ## MODIFIED Component: HostedQuizCard ##
-const HostedQuizCard = ({ quiz, onViewDetailsClick, onDeleteClick }) => (
-  <div
-    className="relative bg-white rounded-xl shadow-md p-6 border-2 border-transparent transition-all group border-t-4 border-t-indigo-500 dark:bg-slate-800 dark:border-t-indigo-500"
-  >
-    {/* --- NEW: Delete Button --- */}
-    <button
-      onClick={(e) => {
-        e.stopPropagation(); // Prevent card click event
-        onDeleteClick();
-      }}
-      className="absolute top-4 right-4 p-2 rounded-full bg-red-50 text-red-500 opacity-0 group-hover:opacity-100 hover:bg-red-100 hover:text-red-700 transition-all dark:bg-red-900/50 dark:text-red-400 dark:hover:bg-red-900"
-      aria-label="Delete session"
-    >
-      <Trash2 className="w-4 h-4" />
-    </button>
-    
-    {/* Title */}
-    <h3 className="text-xl font-semibold text-gray-900 mb-4 group-hover:text-indigo-600 transition dark:text-slate-100 dark:group-hover:text-indigo-400">
-      {quiz.quizTitle}
-    </h3>
+// --- Confirmation Modal ---
+const ConfirmationModal = ({ isOpen, onClose, onConfirm, isDeleting, title, message }) => {
+  return (
+      <AnimatePresence>
+          {isOpen && (
+              <motion.div
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] flex justify-center items-center p-4"
+                  onClick={onClose} >
+                  <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.2, ease: "easeOut" }}
+                      className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 w-full max-w-md text-center border border-gray-200 dark:border-gray-800"
+                      onClick={e => e.stopPropagation()} >
+                      <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/50 mb-4"> <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" aria-hidden="true" /> </div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
+                      <p className="text-sm text-gray-500 mt-2 dark:text-gray-400">{message}</p>
+                      <div className="mt-6 flex justify-center gap-4">
+                          <button type="button" className="px-5 py-2 rounded-lg text-sm font-medium bg-white dark:bg-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900" onClick={onClose} disabled={isDeleting} > Cancel </button>
+                          <button type="button" className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 flex items-center transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900" onClick={onConfirm} disabled={isDeleting} > {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} {isDeleting ? 'Deleting...' : 'Confirm'} </button>
+                      </div>
+                  </motion.div>
+              </motion.div>
+          )}
+      </AnimatePresence>
+  );
+};
 
-    {/* Metadata with Icons */}
-    <div className="space-y-2 mb-6">
-      <div className="flex items-center text-sm text-gray-600 dark:text-slate-400">
-        <Hash className="w-4 h-4 mr-2 text-indigo-500 flex-shrink-0 dark:text-indigo-400" />
-        Join Code:
-        <span className="ml-2 font-mono font-semibold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded dark:bg-indigo-900/50 dark:text-indigo-400">
-          {quiz.joinCode}
-        </span>
-      </div>
-      <div className="flex items-center text-sm text-gray-600 dark:text-slate-400">
-        <ListChecks className="w-4 h-4 mr-2 text-indigo-500 flex-shrink-0 dark:text-indigo-400" />
-        {quiz.totalQuestions} Questions
-      </div>
-      <div className="flex items-center text-sm text-gray-600 dark:text-slate-400">
-        <Calendar className="w-4 h-4 mr-2 text-indigo-500 flex-shrink-0 dark:text-indigo-400" />
-        Hosted: {quiz.hostedAt ? new Date(quiz.hostedAt).toLocaleString() : "N/A"}
-      </div>
-    </div>
+// --- Skeleton Row for Table ---
+const SkeletonRow = () => (
+    <tr className="animate-pulse">
+        <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div></td>
+        <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div></td>
+        <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div></td>
+        <td className="px-6 py-4 whitespace-nowrap text-right space-x-2">
+            <div className="inline-block h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+            <div className="inline-block h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+        </td>
+    </tr>
+);
 
-    {/* Action Footer - now clickable */}
-    <div
-      onClick={onViewDetailsClick}
-      className="text-indigo-600 font-medium flex items-center group-hover:underline cursor-pointer dark:text-indigo-400 w-fit"
-    >
-      View Details <ChevronRight className="w-4 h-4 ml-1" />
+// --- Empty State for Table ---
+const EmptyState = () => (
+  <div className="text-center p-12 bg-white dark:bg-gray-900/50 rounded-b-2xl">
+    <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+        <History className="w-8 h-8 text-gray-400 dark:text-gray-600" />
     </div>
+    <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mt-6 mb-2">No Hosted Sessions Found</h3>
+    <p className="text-gray-500 dark:text-gray-400 max-w-xs mx-auto">Your past live quiz sessions will appear here once you host them.</p>
   </div>
 );
 
-// ## MODIFIED Component: HostedQuizzesPage ##
+// --- NEW: Empty State for No Search Results ---
+const NoResultsState = ({ searchTerm, onClear }) => (
+  <div className="text-center p-12 bg-white dark:bg-gray-900/50 rounded-b-2xl">
+    <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+        <FileSearch className="w-8 h-8 text-gray-400 dark:text-gray-600" />
+    </div>
+    <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mt-6 mb-2">No Results Found</h3>
+    <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-6">
+      No sessions matched your search for: <span className="font-medium text-gray-800 dark:text-gray-200">"{searchTerm}"</span>
+    </p>
+    <button
+        onClick={onClear}
+        className="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+    >
+        Clear Search
+    </button>
+  </div>
+);
+
+
+// ##################################################################
+// ## MAIN COMPONENT: HostedQuizzesPage
+// ##################################################################
+
 const HostedQuizzesPage = ({ user, onNavigate }) => {
-  const { apiCall } = useAPI();
-  const [hostedQuizzes, setHostedQuizzes] = useState([]);
-  const [loading, setLoading] = useState(true);
+    // --- State ---
+    const [sessions, setSessions] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+    const [sessionToDeleteCode, setSessionToDeleteCode] = useState(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isDeletingSession, setIsDeletingSession] = useState(false);
+    const [notification, setNotification] = useState({ show: false, message: '', type: 'error' });
+    
+    // --- NEW: State for Search & Sort ---
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortOrder, setSortOrder] = useState('recent'); // 'recent', 'az', 'za'
 
-  // --- NEW: State for delete functionality ---
-  const [quizToDelete, setQuizToDelete] = useState(null); // Stores joinCode of quiz to delete
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+    // --- Hooks ---
+    const { apiCall } = useAPI();
 
-  useEffect(() => {
-    const fetchHostedQuizzes = async () => {
-      if (!user?.username) {
-        setLoading(false);
-        return;
-      }
-      try {
-        const data = await apiCall(`/quiz/${user.username}/HostedQuiz`, {
-          method: "GET",
-        });
-        setHostedQuizzes(data || []);
-      } catch (err) {
-        console.error("Error fetching hosted quizzes:", err);
-        setHostedQuizzes([]);
-      } finally {
-        setLoading(false);
-      }
+    // --- Data Fetching (Original Logic Unchanged) ---
+    const fetchHostedSessions = useCallback(async (username) => {
+        if (!username) {
+            console.warn("fetchHostedSessions called without username.");
+            setSessions([]);
+            if (initialLoadComplete) setLoading(false);
+            return;
+        }
+
+        console.log(`fetchHostedSessions: Called for user: ${username}. Setting loading=true.`);
+        setLoading(true);
+        try {
+            const endpoint = `/quiz/${username}/HostedQuiz`;
+            const data = await apiCall(endpoint, { method: 'GET' });
+            console.log("fetchHostedSessions: API Response Received:", data);
+            
+            // Set raw data (sorting will be handled by useMemo)
+            setSessions(Array.isArray(data) ? data : []);
+            console.log("fetchHostedSessions: Sessions state updated.");
+
+        } catch (err) {
+            console.error("fetchHostedSessions: Error fetching hosted sessions:", err);
+            setSessions([]);
+            setNotification({ show: true, message: 'Failed to fetch hosted sessions.', type: 'error' });
+        } finally {
+            setLoading(false);
+            setInitialLoadComplete(true);
+            console.log("fetchHostedSessions: Fetch attempt finished. Setting loading=false.");
+        }
+    }, [apiCall, initialLoadComplete]);
+
+    // --- Effect to Fetch Data (Original Logic Unchanged) ---
+    useEffect(() => {
+        const currentUsername = user?.username;
+        console.log(`useEffect[user?.username]: Current username: ${currentUsername}`);
+
+        if (currentUsername) {
+            fetchHostedSessions(currentUsername);
+        } else if (initialLoadComplete) {
+            console.log("useEffect[user?.username]: Username gone after initial load, clearing sessions.");
+            setSessions([]);
+            setLoading(false);
+        }
+    }, [user?.username, fetchHostedSessions, initialLoadComplete]);
+
+    // --- NEW: Client-side Filter & Sort ---
+    const processedSessions = useMemo(() => {
+        let filtered = sessions;
+
+        // 1. Filter by Search Term
+        if (searchTerm) {
+            const lowerSearchTerm = searchTerm.toLowerCase();
+            filtered = sessions.filter(session => 
+                session.quizTitle.toLowerCase().includes(lowerSearchTerm) ||
+                session.joinCode.toLowerCase().includes(lowerSearchTerm)
+            );
+        }
+
+        // 2. Sort the filtered results
+        const sorted = [...filtered]; // Create a new array to sort
+        if (sortOrder === 'recent') {
+            sorted.sort((a, b) => new Date(b.hostedAt) - new Date(a.hostedAt));
+        } else if (sortOrder === 'az') {
+            sorted.sort((a, b) => (a.quizTitle || '').localeCompare(b.quizTitle || ''));
+        } else if (sortOrder === 'za') {
+            sorted.sort((a, b) => (b.quizTitle || '').localeCompare(a.quizTitle || ''));
+        }
+
+        return sorted;
+    }, [sessions, searchTerm, sortOrder]);
+
+
+    // --- Handlers (Original Logic Unchanged) ---
+    const openDeleteModal = (code) => { setSessionToDeleteCode(code); setIsDeleteModalOpen(true); };
+    const closeDeleteModal = () => { setIsDeleteModalOpen(false); setSessionToDeleteCode(null); };
+
+    const handleDeleteSession = async () => {
+        if (!sessionToDeleteCode || !user?.username) return;
+        setIsDeletingSession(true);
+        try {
+            await apiCall(`/sessions/${sessionToDeleteCode}`, { method: 'DELETE' });
+            await fetchHostedSessions(user.username); // Re-fetch
+        } catch (err) {
+            console.error("Failed to delete session:", err);
+            setNotification({ show: true, message: 'Failed to delete session record.', type: 'error' });
+        } finally {
+            setIsDeletingSession(false);
+            closeDeleteModal();
+        }
     };
-    fetchHostedQuizzes();
-  }, [user, apiCall]);
 
-  // --- MODIFIED: Delete handler function with improved error handling ---
-  const handleDeleteSession = async () => {
-    if (!quizToDelete) return;
+    const viewAnalytics = (session) => {
+        onNavigate('analytics', { sessionId: session.joinCode, quizTitle: session.quizTitle, isHost: true, totalQuestions: session.totalQuestions });
+    };
 
-    setIsDeleting(true);
-    try {
-      // Using the endpoint structure you provided
-      await apiCall(`/sessions/${quizToDelete}/deleteSession`, {
-        method: "DELETE",
-      });
-      // Update state to remove the deleted quiz from the UI
-      setHostedQuizzes(currentQuizzes =>
-        currentQuizzes.filter(quiz => quiz.joinCode !== quizToDelete)
-      );
-      closeDeleteModal();
-    } catch (err) {
-      console.error("Failed to delete session:", err);
-      // Check for 403 Forbidden error and provide specific feedback
-      if (err.message && err.message.includes("403")) {
-        alert("Permission Denied: You do not have permission to delete this session.");
-      } else {
-        alert("Error: Could not delete the session. Please try again later.");
-      }
-    } finally {
-      setIsDeleting(false);
-      // Close modal even on error
-      closeDeleteModal();
-    }
-  };
+    // --- Render Logic ---
+    return (
+        <div className="font-sans">
+            {/* --- NEW: Control Bar for Search & Sort --- */}
+            <div className="mb-4 flex flex-col sm:flex-row gap-4">
+                {/* Search Input */}
+                <div className="relative flex-grow">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                        <Search className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                    </span>
+                    <input
+                        type="text"
+                        placeholder="Search by title or code..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                    />
+                </div>
+                {/* Sort Dropdown */}
+                <div className="relative flex-shrink-0">
+                    <select
+                        value={sortOrder}
+                        onChange={(e) => setSortOrder(e.target.value)}
+                        className="w-full sm:w-auto appearance-none pl-4 pr-10 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                    >
+                        <option value="recent">Sort: Most Recent</option>
+                        <option value="az">Sort: Title (A-Z)</option>
+                        <option value="za">Sort: Title (Z-A)</option>
+                    </select>
+                    <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                        <ChevronDown className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                    </span>
+                </div>
+            </div>
 
-  const openDeleteModal = (joinCode) => {
-    setQuizToDelete(joinCode);
-    setIsModalOpen(true);
-  };
+            {/* --- Main Table Card --- */}
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+                        <thead className="bg-gray-50 dark:bg-gray-800/50">
+                            <tr>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Quiz Title</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Session Code</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Hosted On</th>
+                                {/* Participants TH Removed */}
+                                <th scope="col" className="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                         
+                         {/* Show Skeleton ONLY when loading */}
+                         {loading && (
+                             <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
+                                {[...Array(5)].map((_, i) => <SkeletonRow key={i} />)}
+                            </tbody>
+                         )}
 
-  const closeDeleteModal = () => {
-    setIsModalOpen(false);
-    setQuizToDelete(null);
-  };
+                         {/* Show Data ONLY when NOT loading and processed sessions exist */}
+                         {!loading && processedSessions.length > 0 && (
+                            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
+                                {/* Use processedSessions here */}
+                                {processedSessions.map((session) => (
+                                    <tr key={session.joinCode} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 truncate max-w-xs">{session.quizTitle || 'Untitled Quiz'}</div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className="font-mono text-sm px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-md border border-gray-200 dark:border-gray-700">{session.joinCode}</span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                            <div className="flex items-center" title={session.hostedAt ? new Date(session.hostedAt).toLocaleString() : 'Date N/A'}>
+                                                <Calendar className="w-4 h-4 mr-1.5 flex-shrink-0" />
+                                                {session.hostedAt ? new Date(session.hostedAt).toLocaleDateString() : 'N/A'}
+                                            </div>
+                                             <div className="flex items-center mt-1 text-xs" title={session.hostedAt ? new Date(session.hostedAt).toLocaleString() : 'Time N/A'}>
+                                                 <Clock className="w-3 h-3 mr-1.5 flex-shrink-0" />
+                                                 {session.hostedAt ? new Date(session.hostedAt).toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'}) : 'N/A'}
+                                             </div>
+                                        </td>
+                                        {/* Participants TD Removed */}
+                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-1">
+                                            <button onClick={() => viewAnalytics(session)} className="p-2 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors" title="View Analytics"> <Eye className="w-5 h-5" /> </button>
+                                            <button onClick={() => openDeleteModal(session.joinCode)} className="p-2 rounded-lg text-red-600 dark:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors" title="Delete Session Record" disabled={isDeletingSession}> <Trash2 className="w-5 h-5" /> </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        )}
+                    </table>
+                </div>
 
-  return (
-    <>
-      <main>
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <SkeletonCard key={i} />
-            ))}
-          </div>
-        ) : hostedQuizzes.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl shadow-sm border dark:bg-slate-800 dark:border-slate-700">
-            <Users className="w-16 h-16 text-gray-300 mx-auto mb-4 dark:text-slate-600" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2 dark:text-slate-100">
-              No hosted quizzes yet
-            </h3>
-            <p className="text-gray-600 mb-6 dark:text-slate-400">
-              Host a quiz from the "My Quizzes" section to see its history here!
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {hostedQuizzes.map((quiz) => (
-              <HostedQuizCard
-                key={quiz.id || quiz.joinCode}
-                quiz={quiz}
-                onViewDetailsClick={() =>
-                  onNavigate("hostedQuizAnalytics", {
-                    quizId: quiz.quizId,
-                    quizTitle: quiz.quizTitle,
-                    joinCode: quiz.joinCode,
-                    username: user.username,
-                  })
-                }
-                onDeleteClick={() => openDeleteModal(quiz.joinCode)}
-              />
-            ))}
-          </div>
-        )}
-      </main>
-      
-      {/* --- NEW: Render the modal --- */}
-      <ConfirmationModal
-        isOpen={isModalOpen}
-        onClose={closeDeleteModal}
-        onConfirm={handleDeleteSession}
-        isDeleting={isDeleting}
-        title="Delete Session"
-        message={`Are you sure you want to permanently delete the session with join code "${quizToDelete}"? This action cannot be undone.`}
-      />
-    </>
-  );
+                {/* --- UPDATED Empty State Logic --- */}
+                
+                {/* 1. Show "No Sessions" if not loading, and the base sessions array is empty */}
+                {!loading && sessions.length === 0 && (
+                    <EmptyState />
+                )}
+
+                {/* 2. Show "No Results" if not loading, base sessions exist, but filtered results are empty */}
+                {!loading && sessions.length > 0 && processedSessions.length === 0 && (
+                    <NoResultsState searchTerm={searchTerm} onClear={() => setSearchTerm('')} />
+                )}
+            </div>
+
+            {/* --- Modals & Notifications (Unchanged) --- */}
+            <ConfirmationModal isOpen={isDeleteModalOpen} onClose={closeDeleteModal} onConfirm={handleDeleteSession} isDeleting={isDeletingSession} title="Delete Hosted Session Record" message={`Are you sure you want to delete the record for session ${sessionToDeleteCode}? This action cannot be undone.`} />
+            <AnimatePresence> {notification.show && ( <Notification message={notification.message} type={notification.type} onClose={() => setNotification({ show: false, message: '', type: 'error' })} /> )} </AnimatePresence>
+        </div>
+    );
 };
 
 export default HostedQuizzesPage;
-
