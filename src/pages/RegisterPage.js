@@ -70,7 +70,7 @@ const RegisterPage = ({ onNavigate }) => {
               Create Account
             </h1>
             <p className="text-gray-200/90 mt-2 text-lg [text-shadow:0_1px_6px_rgba(0,0,0,0.4)]">
-              Join MentiMeter today
+              Join IntelliQuiz today
             </p>
           </div>
 

@@ -55,7 +55,7 @@ const LoginPage = ({ onNavigate }) => {
             </div>
             {/* Text shadow for contrast (Unchanged) */}
             <h1 className="text-4xl font-bold text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.4)]">
-              MentiMeter
+              IntelliQuiz
             </h1>
             <p className="text-gray-200/90 mt-2 text-lg [text-shadow:0_1px_6px_rgba(0,0,0,0.4)]">
               Interactive Live Quizzes

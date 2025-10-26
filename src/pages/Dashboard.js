@@ -584,7 +584,7 @@ const Dashboard = ({ onNavigate }) => {
           <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md">
             <Users className="w-5 h-5 text-white" />
           </div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 truncate">MentiMeter</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 truncate">IntelliQuiz</h1>
         </div>
 
         {/* Navigation */}
@@ -634,7 +634,7 @@ const Dashboard = ({ onNavigate }) => {
                 <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md">
                   <Users className="w-5 h-5 text-white" />
                 </div>
-                <h1 className="text-lg font-bold text-gray-800 dark:text-gray-100">MentiMeter</h1>
+                <h1 className="text-lg font-bold text-gray-800 dark:text-gray-100">IntelliQuiz</h1>
               </div>
               <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle Menu" className="p-2 -mr-2 rounded-md text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">
                 {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
