@@ -23,13 +23,10 @@ import {
   CheckCheck,   // For success notification
   History,
   LayoutDashboard, // New icon
-  ArrowDownUp, // New icon for Sort
-  PlayCircle, // New icon
-  ChevronDown, // New icon
+  PlayCircle, 
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useAPI } from '../hooks/useAPI';
-import { useTheme } from '../context/ThemeContext';
 import CreateQuizModal from './CreateQuizModal';
 import HostedQuizzesPage from './HostedQuizzesPage';
 import ThemeToggle from './ThemeToggle';
@@ -365,7 +362,7 @@ const Dashboard = ({ onNavigate }) => {
   // --- Original Hooks (Preserved) ---
   const { user, logout } = useAuth();
   const { apiCall } = useAPI();
-  const { theme } = useTheme();
+  
 
   // --- Original Callbacks (Preserved) ---
   const fetchMyQuizzes = useCallback(async () => {

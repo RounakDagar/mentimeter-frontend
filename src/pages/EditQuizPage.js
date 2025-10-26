@@ -10,7 +10,6 @@ import {
     AlertTriangle,
     AlertOctagon,
     GripVertical, // New: For "drag" handle
-    CheckCircle, 
     Check
 } from 'lucide-react';
 import { useAPI } from '../hooks/useAPI';

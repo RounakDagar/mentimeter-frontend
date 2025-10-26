@@ -59,7 +59,7 @@ const JoinSessionPage = ({ onNavigate }) => {
 
         // **Original user check**
         if (!user || !user.username) {
-            setError('You must be logged in to join a session.');
+            onNavigate('login');
             return;
         }
 

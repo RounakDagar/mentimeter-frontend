@@ -1,11 +1,8 @@
 // src/pages/AsyncResultPage.js
 import React, { useEffect, useState } from 'react';
 import { 
-  Check, 
-  X, 
   ChevronLeft, 
   UserCircle, 
-  ListChecks, 
   Loader2, 
   AlertTriangle,
   CheckCircle, // New

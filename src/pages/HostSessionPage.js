@@ -2,12 +2,11 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import {
     Users, Play, Pause, ChevronRight, StopCircle, CheckCircle, ArrowLeft,
-    Loader2, BarChart3, X, Check, Eye, LogOut, Copy, QrCode, UserCircle,
+    Loader2, BarChart3, X, Check, Eye, Copy, UserCircle,
     AlertTriangle, ChevronLeft
 } from 'lucide-react';
 import { useAPI } from '../hooks/useAPI';
 import { useWebSocket } from '../hooks/useWebSocket'; // Using your hook signature
-import Leaderboard from '../pages/Leaderboard';
 import {
     ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell
 } from 'recharts';
@@ -193,7 +192,7 @@ const HostSessionPage = ({ joinCode, quizId, onNavigate }) => {
     const [currentQuestion, setCurrentQuestion] = useState(null);
     const [status, setStatus] = useState('WAITING');
     const [answeredUsers, setAnsweredUsers] = useState(new Set());
-    const [leaderboard, setLeaderboard] = useState([]);
+    
     const [optionCounts, setOptionCounts] = useState({});
     const [notification, setNotification] = useState({ show: false, message: '', type: 'error' });
     const [loadingQuiz, setLoadingQuiz] = useState(true);
@@ -225,9 +224,7 @@ const HostSessionPage = ({ joinCode, quizId, onNavigate }) => {
             console.log("Host WS: Received Participants Update:", data); // DEBUG
             setParticipants(Array.isArray(data) ? data.sort() : []);
         });
-        const unsubLeaderboard = subscribe(`/topic/session/${joinCode}/leaderboard`, (data) => {
-            setLeaderboard(Array.isArray(data) ? data : []);
-        });
+        
         const unsubHost = subscribe(`/topic/session/${joinCode}/host`, (data) => {
             if (data.eventType === 'USER_ANSWERED') {
                 setAnsweredUsers(prev => new Set(prev).add(data.name));
@@ -259,10 +256,10 @@ const HostSessionPage = ({ joinCode, quizId, onNavigate }) => {
 
         return () => { // Cleanup function
              console.log("Host WS: Unsubscribing..."); // DEBUG
-            unsubParticipants?.(); unsubHost?.(); unsubEnded?.(); unsubQuestion?.(); unsubLeaderboard?.(); unsubStatus?.();
+            unsubParticipants?.(); unsubHost?.(); unsubEnded?.(); unsubQuestion?.(); unsubStatus?.();
         };
         // Dependencies reverted to match the original reference code EXACTLY
-    }, [connected, joinCode, subscribe, send, quizId]);
+    }, [connected, joinCode, subscribe, send,status, quizId]);
 
     // Action Handlers (Original Logic)
     const handleStart = () => { send(`/app/session/${joinCode}/start`, {}); setStatus('ACTIVE'); };

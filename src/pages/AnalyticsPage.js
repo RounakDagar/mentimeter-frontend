@@ -1,15 +1,13 @@
 // src/pages/AnalyticsPage.js
 import React, { useEffect, useState, useMemo } from 'react';
 import {
-  Check,
-  X,
   ChevronLeft,
   UserCircle,
   // ListChecks, // Keep if used elsewhere
   Trophy,
   Loader2,
   AlertTriangle,
-  Users,
+  
   Search,
   XCircle,
   Eye,
@@ -19,7 +17,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useAPI } from '../hooks/useAPI';
 import Leaderboard from '../pages/Leaderboard';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 // ## UserListModal (Unchanged) ##
 const UserListModal = ({ isOpen, onClose, usernames, optionText }) => {

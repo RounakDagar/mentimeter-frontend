@@ -57,7 +57,7 @@ const PodiumCard = ({ entry, currentUser, rank, order }) => {
     >
       <div className="relative">
         {style.icon}
-        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-white dark:bg-gray-900 text-xs font-bold ${style.nameColor}">
+        <span className={`absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-white dark:bg-gray-900 text-xs font-bold ${style.nameColor}`}>
           {rank}
         </span>
       </div>

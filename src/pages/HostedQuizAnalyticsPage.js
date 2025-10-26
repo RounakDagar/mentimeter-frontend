@@ -1,15 +1,11 @@
 // src/pages/HostedQuizAnalyticsPage.js
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from "react";
 import {
   ChevronLeft,
-  Check,
-  BarChart3,
-  Users,
   ListChecks,
   RefreshCw,
   Loader2,
   Trophy,
-  X,
   UserCircle,
   Search,
   XCircle,
@@ -22,8 +18,7 @@ import { useAPI } from "../hooks/useAPI";
 import { motion, AnimatePresence } from 'framer-motion';
 // Recharts imports remain the same
 import {
-    PieChart, Pie, Cell, ResponsiveContainer, Bar,
-    BarChart as RechartsBarChart, XAxis, YAxis, Tooltip, Legend
+    PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend
 } from 'recharts';
 
 
@@ -196,7 +191,8 @@ const OptionBar = ({
 
 // --- QuestionCard (Premium Styling) ---
 const QuestionCard = ({ q, idx, totalNumQuestions, isHost, highlightedUserAnswerIndex }) => {
-  const validOptionCounts = q.optionCounts || {};
+  // elint-disable-line
+  const validOptionCounts = useMemo(() => q.optionCounts || {}, [q.optionCounts]);
   const totalVotes = Object.values(validOptionCounts).reduce((a, b) => a + b, 0);
   const [modalState, setModalState] = useState({ isOpen: false, usernames: [], optionText: "" });
   const handleShowUsers = (usernames, optionText) => setModalState({ isOpen: true, usernames, optionText });
@@ -300,27 +296,7 @@ const QuestionCard = ({ q, idx, totalNumQuestions, isHost, highlightedUserAnswer
   );
 };
 
-// --- ContentSkeleton (Premium Styling) ---
-const ContentSkeleton = () => (
-    <div className="space-y-8 animate-pulse">
-        {[...Array(3)].map((_, i) => (
-             <div key={i} className="bg-white rounded-2xl shadow-xl border border-gray-200/50 dark:bg-gray-900 dark:border-gray-800/50">
-                <div className="p-6 border-b border-gray-200 dark:border-gray-800/50">
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-3"></div>
-                  <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-                </div>
-                <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                        <div className="h-12 bg-gray-100 dark:bg-gray-800 rounded-xl w-full"></div>
-                        <div className="h-12 bg-gray-100 dark:bg-gray-800 rounded-xl w-full"></div>
-                        <div className="h-12 bg-gray-100 dark:bg-gray-800 rounded-xl w-full"></div>
-                    </div>
-                    <div className="h-64 bg-gray-100 dark:bg-gray-800 rounded-xl"></div>
-                </div>
-            </div>
-        ))}
-    </div>
-);
+
 
 // --- EmptyState (Premium Styling) ---
 const EmptyState = ({ icon: Icon, title, message }) => (

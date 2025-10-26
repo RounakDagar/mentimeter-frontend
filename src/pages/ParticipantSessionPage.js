@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Clock, CheckCircle, Send, Loader2 } from 'lucide-react'; // Added Loader2
+import { CheckCircle, Send, Loader2 } from 'lucide-react'; // Added Loader2
 import { useWebSocket } from '../hooks/useWebSocket';
 import Leaderboard from '../pages/Leaderboard'; // Import Leaderboard
 import { motion, AnimatePresence } from 'framer-motion';

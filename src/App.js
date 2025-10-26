@@ -8,13 +8,13 @@ import JoinSessionPage from './pages/JoinSessionPage';
 import HostSessionPage from './pages/HostSessionPage';
 import ParticipantSessionPage from './pages/ParticipantSessionPage';
 import AnalyticsPage from './pages/AnalyticsPage';
-import HostedQuizzesPage from './pages/HostedQuizzesPage';
+
 import HostedQuizAnalyticsPage from './pages/HostedQuizAnalyticsPage';
 import EditQuizPage from './pages/EditQuizPage';
 import AsyncAttemptPage from './pages/AsyncAttemptPage';
 import AsyncAnalyticsPage from './pages/AsyncAnalyticsPage';
 import { ThemeProvider } from './context/ThemeContext';
-import { Users, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import AsyncResultPage from './pages/AsyncResultPage';
 
 

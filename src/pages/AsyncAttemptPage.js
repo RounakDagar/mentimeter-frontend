@@ -1,7 +1,7 @@
 // src/pages/AsyncAttemptPage.js
 import React, { useState, useEffect } from 'react';
 import { useAPI } from '../hooks/useAPI';
-import { useAuth } from '../context/AuthContext';
+
 import { 
     Loader2, 
     Send, 
@@ -9,8 +9,7 @@ import {
     AlertTriangle, 
     ArrowLeft,
     ChevronLeft, // New
-    ChevronRight, // New
-    Check, // New
+    ChevronRight,
     XCircle // New
 } from 'lucide-react';
 
@@ -67,13 +66,13 @@ const FinishedState = ({ onNavigate }) => (
 const AsyncAttemptPage = ({ shareCode, onNavigate }) => {
     
     // --- Original State and Hooks (Preserved) ---
-    const { user } = useAuth(); 
+    
     const { apiCall } = useAPI();
     
     const [quiz, setQuiz] = useState(null);
     const [answers, setAnswers] = useState({});
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [isFinished, setIsFinished] = useState(false);
+    const [isFinished] = useState(false);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
