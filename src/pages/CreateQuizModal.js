@@ -229,7 +229,7 @@ const CreateQuizModal = ({ onClose, onSuccess }) => {
             text: q.text,
             options: q.options,
             // Use 1000 or another invalid index if null, as in original logic
-            correctAnswer: q.correctAnswerIndex === null ? 1000 : q.correctAnswerIndex
+            correctAnswerIndex: q.correctAnswerIndex === null ? 1000 : q.correctAnswerIndex
           }))
         };
         const quizData = await apiCall('/quiz', {

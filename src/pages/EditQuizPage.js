@@ -261,10 +261,11 @@ const EditQuizPage = ({ quizId, onNavigate }) => {
             try {
                 const data = await apiCall(`/quiz/${quizId}`);
                 setTitle(data.title);
+
                 setQuestions(data.questionList.map(q => ({
                     text: q.text,
                     options: q.options,
-                    correctAnswerIndex: q.correctAnswer === 1000 ? null : q.correctAnswer
+                    correctAnswerIndex: q.correctAnswerIndex === 1000 ? null : q.correctAnswerIndex
                 })));
             } catch (err) {
                 console.error("Failed to fetch quiz:", err);
@@ -332,10 +333,10 @@ const EditQuizPage = ({ quizId, onNavigate }) => {
           questionList: questions.map(q => ({
             text: q.text,
             options: q.options,
-            correctAnswer: q.correctAnswerIndex === null ? 1000 : q.correctAnswerIndex
+            correctAnswerIndex: q.correctAnswerIndex === null ? 1000 : q.correctAnswerIndex
           }))
         };
-        await apiCall(`/quiz/update/${quizId}`, {
+        await apiCall(`/quiz/${quizId}/edit`, {
           method: 'PUT',
           body: JSON.stringify(payload)
         });
