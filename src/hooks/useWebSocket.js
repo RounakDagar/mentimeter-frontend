@@ -11,7 +11,7 @@ export const useWebSocket = (joinCode) => {
   useEffect(() => {
     if (!joinCode || !token) return;
 
-    const wsUrl = `ws://localhost:8080/ws`;
+    const wsUrl = 'wss://mentimeter-backend-860371060371.us-central1.run.app/ws';
     const websocket = new WebSocket(wsUrl);
     
     websocket.onopen = () => {

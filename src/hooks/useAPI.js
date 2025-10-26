@@ -1,7 +1,7 @@
 import { useAuth } from '../context/AuthContext';
 import { useCallback } from 'react';
 
-const API_BASE_URL = 'http://localhost:8080';
+const API_BASE_URL = 'https://mentimeter-backend-860371060371.us-central1.run.app';
 
 export const useAPI = () => {
   const { token } = useAuth();
